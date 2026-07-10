@@ -237,18 +237,6 @@ export default function DashboardPage() {
             </Button>
           </div>
 
-          {!canCreateProject() && (
-            <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/10">
-              <CardContent className="pt-6">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  You&apos;ve reached the free plan limit of 1 project. 
-                  <Link href="/dashboard/billing" className="font-medium underline ml-1">
-                    Upgrade to Pro
-                  </Link> for unlimited projects.
-                </p>
-              </CardContent>
-            </Card>
-          )}
 
           {projects.length === 0 ? (
             <Card className="text-center py-12">
@@ -372,12 +360,6 @@ export default function DashboardPage() {
                 <Link href="/dashboard/projects/new">
                   <Plus className="h-4 w-4 mr-2" />
                   Create New Project
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href="/dashboard/billing">
-                  <Crown className="h-4 w-4 mr-2" />
-                  Manage Subscription
                 </Link>
               </Button>
             </CardContent>

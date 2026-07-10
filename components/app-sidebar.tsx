@@ -361,11 +361,6 @@ export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
               {theme === 'dark' ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
               Toggle Theme
                 </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/billing">
-                <CreditCardIcon className="h-4 w-4 mr-2" /> Billing
-              </Link>
-                </DropdownMenuItem>
               <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
               <LogOutIcon className="h-4 w-4 mr-2" /> Log out
