@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   DragDropContext,
   Droppable,
@@ -228,6 +228,31 @@ export function KanbanBoard({
     return Array.from(map.values());
   }, [columns]);
   const filterActive = q !== '' || priority !== 'all' || assignee !== 'all' || dueFilter !== 'all' || label !== 'all';
+
+  // Personal saved view: remember this board's filters per user (localStorage).
+  const boardKey = `ekgo-filters-${(columns[0] as any)?.project_id || 'board'}`;
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(boardKey) || 'null');
+      if (saved) {
+        setQ(saved.q || '');
+        setPriority(saved.priority || 'all');
+        setAssignee(saved.assignee || 'all');
+        setDueFilter(saved.dueFilter || 'all');
+        setLabel(saved.label || 'all');
+      }
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardKey]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(boardKey, JSON.stringify({ q, priority, assignee, dueFilter, label }));
+    } catch {
+      /* ignore */
+    }
+  }, [boardKey, q, priority, assignee, dueFilter, label]);
   const matches = (task: Task) => {
     if (q) {
       const s = q.toLowerCase();

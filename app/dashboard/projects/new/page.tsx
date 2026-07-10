@@ -31,6 +31,7 @@ export default function NewProjectPage() {
   const [checkingSlug, setCheckingSlug] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [template, setTemplate] = useState('kanban');
   const router = useRouter();
   const params = useParams();
   const projectId = params?.id as string;
@@ -187,23 +188,20 @@ export default function NewProjectPage() {
 
       if (projectError) throw projectError;
 
-      // Create default columns
-      const defaultColumns = [
-        { name: 'To Do', position: 0 },
-        { name: 'In Progress', position: 1 },
-        { name: 'Done', position: 2 },
-      ];
-
-      const { error: columnsError } = await supabase
-        .from('columns')
-        .insert(
-          defaultColumns.map(col => ({
-            ...col,
-            project_id: project.id,
-          }))
-        );
-
-      if (columnsError) throw columnsError;
+      // Seed columns from the chosen template.
+      const TEMPLATE_COLUMNS: Record<string, string[]> = {
+        kanban: ['To Do', 'In Progress', 'Done'],
+        service: ['Requested', 'Scheduled', 'In Progress', 'Completed'],
+        sprint: ['Backlog', 'To Do', 'In Progress', 'Review', 'Done'],
+        blank: [],
+      };
+      const cols = TEMPLATE_COLUMNS[template] || TEMPLATE_COLUMNS.kanban;
+      if (cols.length) {
+        const { error: columnsError } = await supabase
+          .from('columns')
+          .insert(cols.map((name, i) => ({ name, position: i, project_id: project.id })));
+        if (columnsError) throw columnsError;
+      }
 
       // Notify sidebar to update
       if ((window as any).handleProjectUpdate) {
@@ -306,9 +304,23 @@ export default function NewProjectPage() {
                 rows={4}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="template">Start from a template</Label>
+              <select
+                id="template"
+                value={template}
+                onChange={(e) => setTemplate(e.target.value)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="kanban">Basic Kanban — To Do / In Progress / Done</option>
+                <option value="service">Service workflow — Requested / Scheduled / In Progress / Completed</option>
+                <option value="sprint">Sprint — Backlog / To Do / In Progress / Review / Done</option>
+                <option value="blank">Blank — no columns</option>
+              </select>
+            </div>
             <div className="flex gap-3 pt-4">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={creating || !canCreateProject() || slugAvailable !== true || checkingSlug} 
                 className="flex-1"
               >
