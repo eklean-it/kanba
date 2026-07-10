@@ -14,6 +14,7 @@ import { TaskAssignees } from '@/components/task-assignees';
 import { TaskLabels } from '@/components/task-labels';
 import { TaskTableView } from '@/components/task-table-view';
 import { TaskCalendarView } from '@/components/task-calendar-view';
+import { TaskChecklist } from '@/components/task-checklist';
 import {
   Dialog,
   DialogContent,
@@ -219,6 +220,21 @@ export default function ProjectPage() {
       });
       columnsWithTasks.forEach((col: any) => {
         col.tasks = col.tasks.map((t: any) => ({ ...t, labels: labelsByTask[t.id] || [] }));
+      });
+
+      // Attach checklist progress to each task
+      const { data: checkRows } = await supabase
+        .from('task_checklist_items')
+        .select('task_id, is_done')
+        .eq('project_id', project.id);
+      const checkByTask: Record<string, { total: number; done: number }> = {};
+      (checkRows || []).forEach((r: any) => {
+        const c = (checkByTask[r.task_id] ||= { total: 0, done: 0 });
+        c.total++;
+        if (r.is_done) c.done++;
+      });
+      columnsWithTasks.forEach((col: any) => {
+        col.tasks = col.tasks.map((t: any) => ({ ...t, checklist: checkByTask[t.id] || { total: 0, done: 0 } }));
       });
 
       setColumns(columnsWithTasks);
@@ -1025,6 +1041,10 @@ export default function ProjectPage() {
 
             {editingTask && project && (
               <TaskLabels taskId={editingTask.id} projectId={project.id} />
+            )}
+
+            {editingTask && project && (
+              <TaskChecklist taskId={editingTask.id} projectId={project.id} />
             )}
 
             {editingTask && project && (

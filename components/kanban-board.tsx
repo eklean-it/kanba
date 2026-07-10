@@ -41,6 +41,7 @@ import {
   Search,
   X,
   Filter,
+  ListChecks,
 } from 'lucide-react';
 
 import type { Task, Column, ProjectMember } from '@/lib/types';
@@ -142,6 +143,12 @@ function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone,
                   {(task as any).labels.map((l: any) => (
                     <span key={l.id} className={`rounded-full px-2 py-0.5 text-[10px] ${labelClass(l.color)}`}>{l.name}</span>
                   ))}
+                </div>
+              )}
+              {(task as any).checklist?.total > 0 && (
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <ListChecks className="h-3 w-3" />
+                  {(task as any).checklist.done}/{(task as any).checklist.total}
                 </div>
               )}
               <div className="flex justify-between items-center text-xs text-muted-foreground">
