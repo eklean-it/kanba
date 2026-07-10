@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { TaskAttachments } from '@/components/task-attachments';
+import { TaskAssignees } from '@/components/task-assignees';
 import {
   Dialog,
   DialogContent,
@@ -307,7 +308,6 @@ export default function ProjectPage() {
           column_id: selectedColumnId,
           priority: taskPriority,
           due_date: taskDueDate || null,
-          assigned_to: taskAssignedTo || null, // FIXED: Use null instead of empty string
           updated_by: user!.id,
         })
         .eq('id', editingTask.id);
@@ -993,22 +993,9 @@ export default function ProjectPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="editAssignedTo">Assign To</Label>
-              <Select value={taskAssignedTo || ''} onValueChange={(value) => setTaskAssignedTo(value || undefined)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select team member (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {projectMembers.map((member) => (
-                    <SelectItem key={member.user_id} value={member.user_id}>
-                      {member.profiles?.full_name || member.profiles?.email || 'Unknown User'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {editingTask && project && (
+              <TaskAssignees taskId={editingTask.id} projectId={project.id} members={projectMembers} />
+            )}
 
             {editingTask && project && (
               <div className="border-t pt-4">
