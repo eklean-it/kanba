@@ -513,34 +513,10 @@ export default function ProjectPage() {
 
     setDeletingProject(true);
     try {
-      // First, delete all tasks in the project (using .in() for multiple column IDs)
-      if (columns.length > 0) {
-        const columnIds = columns.map(col => col.id);
-        const { error: tasksError } = await supabase
-          .from('tasks')
-          .delete()
-          .in('column_id', columnIds);
-
-        if (tasksError) throw tasksError;
-      }
-
-      // Then, delete all columns in the project
-      const { error: columnsError } = await supabase
-        .from('columns')
-        .delete()
-        .eq('project_id', project.id);
-
-      if (columnsError) throw columnsError;
-
-      // Delete project members
-      const { error: membersError } = await supabase
-        .from('project_members')
-        .delete()
-        .eq('project_id', project.id);
-
-      if (membersError) throw membersError;
-
-      // Finally, delete the project
+      // Delete the project directly. Its tasks, columns, and project_members are
+      // removed automatically via ON DELETE CASCADE foreign keys. Deleting them
+      // manually first was redundant and aborted the whole delete if any
+      // intermediate step hit an RLS check.
       const { error: projectError } = await supabase
         .from('projects')
         .delete()

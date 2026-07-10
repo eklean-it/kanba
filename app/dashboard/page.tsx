@@ -194,23 +194,9 @@ export default function DashboardPage() {
           </p>
           
         </div>
-        <div className="flex items-center space-x-4">
-          <Badge variant={profile?.subscription_status === 'pro' ? 'default' : 'secondary'}>
-            {profile?.subscription_status === 'pro' ? (
-              <><Crown className="h-3 w-3 mr-1" /> Pro</>
-            ) : (
-              'Free'
-            )}
-          </Badge>
-          {profile?.subscription_status !== 'pro' && (
-            <Button size='xs' asChild className='text-xs'>
-              <Link href="/dashboard/billing">Upgrade to Pro</Link>
-            </Button>
-          )}
-        </div>
       </div>
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between  ">
             <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
@@ -234,14 +220,6 @@ export default function DashboardPage() {
           </CardHeader>
         </Card>
         
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between ">
-            <CardTitle className="text-sm font-medium">Subscription</CardTitle>
-            <div className="text-sm font-bold capitalize">
-              {profile?.subscription_status || 'Free'}
-            </div>            
-          </CardHeader>
-        </Card>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Projects */}

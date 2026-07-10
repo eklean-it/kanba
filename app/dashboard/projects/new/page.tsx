@@ -239,19 +239,6 @@ export default function NewProjectPage() {
           Set up a new Kanban project to organize your work
         </p>
       </div>
-      {/* Limit Warning */}
-      {!canCreateProject() && (
-        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/10 mb-6">
-          <CardContent className="pt-6">
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              You&apos;ve reached the free plan limit of 1 project. 
-              <Link href="/dashboard/billing" className="font-medium underline ml-1">
-                Upgrade to Pro
-              </Link> for unlimited projects.
-            </p>
-          </CardContent>
-        </Card>
-      )}
       {/* Form */}
       <Card>
         <CardHeader>
