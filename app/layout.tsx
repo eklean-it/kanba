@@ -32,9 +32,7 @@ export default function RootLayout({
         <meta name="description" content="Task and project management for the EKGO! team." />
 
         {/* Icons */}
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="icon" href="/ekgo-icon.svg" media="(prefers-color-scheme: light)" />
-        <link rel="icon" href="/ekgo-icon.svg" media="(prefers-color-scheme: dark)" />
+        <link rel="icon" href="/ekgo-icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/ekgo-icon.svg" />
 
         {/* Open Graph */}
@@ -42,10 +40,6 @@ export default function RootLayout({
         <meta property="og:description" content="Task and project management for the EKGO! team." />
         <meta property="og:url" content="https://tasks.eklean.com" />
         <meta property="og:site_name" content="EKGO! Tasks" />
-        <meta property="og:image" content="https://tasks.eklean.com/og-image.png" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="EKGO! Tasks" />
         <meta property="og:locale" content="en_US" />
         <meta property="og:type" content="website" />
 
@@ -53,7 +47,6 @@ export default function RootLayout({
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="EKGO! Tasks" />
         <meta name="twitter:description" content="Task and project management for the EKGO! team." />
-        <meta name="twitter:image" content="https://tasks.eklean.com/og-image.png" />
 
         {/* Internal tool — keep it out of search indexes */}
         <meta name="robots" content="noindex, nofollow" />
