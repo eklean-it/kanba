@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetch-all';
 import { useUser } from '@/components/user-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
@@ -55,11 +56,12 @@ export default function AnalyticsPage() {
   const [people, setPeople] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
-    const [{ data: projRows }, { data: colRows }, { data: taskRows }] = await Promise.all([
+    const [projRes, colRows, taskRows] = await Promise.all([
       supabase.from('projects').select('id, name'),
-      supabase.from('columns').select('id, name, project_id'),
-      supabase.from('tasks').select('column_id, due_date, is_done, assigned_to, priority'),
+      fetchAllRows((f, t) => supabase.from('columns').select('id, name, project_id').order('id').range(f, t)),
+      fetchAllRows((f, t) => supabase.from('tasks').select('column_id, due_date, is_done, assigned_to, priority').order('id').range(f, t)),
     ]);
+    const projRows = projRes.data;
     const projMap: Record<string, string> = {};
     (projRows || []).forEach((p: { id: string; name: string }) => (projMap[p.id] = p.name));
     const colMap: Record<string, ColInfo> = {};

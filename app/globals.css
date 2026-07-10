@@ -188,3 +188,5 @@ html {
 .animate-spin-slow {
   animation: spin-slow 20s linear infinite;
 }
+/* Native windowing for long lists: skip rendering off-screen items. */
+.cv-auto { content-visibility: auto; contain-intrinsic-size: 0 96px; }
