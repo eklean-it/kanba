@@ -17,6 +17,7 @@ import { TaskCalendarView } from '@/components/task-calendar-view';
 import { ArchivedTasks } from '@/components/archived-tasks';
 import { TaskChecklist } from '@/components/task-checklist';
 import { TaskDependencies } from '@/components/task-dependencies';
+import { TaskCustomFields } from '@/components/task-custom-fields';
 import {
   Dialog,
   DialogContent,
@@ -392,6 +393,22 @@ export default function ProjectPage() {
     } catch (error: any) {
       toast.error(error.message || 'Failed to archive task');
     }
+  };
+
+  const handleBulkArchive = async (ids: string[]) => {
+    if (!ids.length) return;
+    const { error } = await supabase.from('tasks').update({ archived: true, updated_by: user!.id }).in('id', ids);
+    if (error) { toast.error('Failed to archive'); return; }
+    toast.success(`${ids.length} task(s) archived`);
+    await loadProject();
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    if (!ids.length) return;
+    const { error } = await supabase.from('tasks').delete().in('id', ids);
+    if (error) { toast.error('Failed to delete'); return; }
+    toast.success(`${ids.length} task(s) deleted`);
+    await loadProject();
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -1029,7 +1046,7 @@ export default function ProjectPage() {
         </TabsContent>
 
         <TabsContent value="table" className="space-y-6">
-          <TaskTableView columns={columns} projectMembers={projectMembers} onEditTask={openEditTaskDialog} />
+          <TaskTableView columns={columns} projectMembers={projectMembers} onEditTask={openEditTaskDialog} onBulkArchive={handleBulkArchive} onBulkDelete={handleBulkDelete} />
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-6">
@@ -1156,6 +1173,10 @@ export default function ProjectPage() {
 
             {editingTask && project && (
               <TaskDependencies taskId={editingTask.id} projectId={project.id} tasks={columns.flatMap((c) => c.tasks)} />
+            )}
+
+            {editingTask && project && (
+              <TaskCustomFields taskId={editingTask.id} projectId={project.id} />
             )}
 
             {editingTask && project && (
