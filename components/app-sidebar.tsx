@@ -93,6 +93,7 @@ interface AppSidebarProps {
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Projects", url: "/dashboard/projects", icon: FolderIcon },
+  { title: "Analytics", url: "/dashboard/analytics", icon: BarChartIcon },
   { title: "Settings", url: "/dashboard/settings", icon: SettingsIcon },
 ]
 
