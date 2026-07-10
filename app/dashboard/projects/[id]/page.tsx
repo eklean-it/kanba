@@ -108,6 +108,7 @@ export default function ProjectPage() {
   const [taskDescription, setTaskDescription] = useState('');
   const [taskPriority, setTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [taskDueDate, setTaskDueDate] = useState('');
+  const [taskRecurrence, setTaskRecurrence] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
   const [taskAssignedTo, setTaskAssignedTo] = useState<string | undefined>(undefined);
   
   // Column form state
@@ -295,6 +296,7 @@ export default function ProjectPage() {
           column_id: selectedColumnId,
           position: nextPosition,
           priority: taskPriority,
+          recurrence: taskRecurrence,
           due_date: taskDueDate || null,
           assigned_to: taskAssignedTo || null, // FIXED: Use null instead of empty string
           created_by: user!.id,
@@ -340,6 +342,7 @@ export default function ProjectPage() {
           description: taskDescription.trim() || null,
           column_id: selectedColumnId,
           priority: taskPriority,
+          recurrence: taskRecurrence,
           due_date: taskDueDate || null,
           updated_by: user!.id,
         })
@@ -400,6 +403,34 @@ export default function ProjectPage() {
       logActivity(isDone ? 'completed' : 'reopened', 'task', taskId, {
         title: columns.flatMap((c) => c.tasks).find((x) => x.id === taskId)?.title,
       });
+
+      // Recurring tasks: on completion, spawn the next occurrence.
+      if (isDone) {
+        const src: any = columns.flatMap((c) => c.tasks).find((x) => x.id === taskId);
+        if (src && src.recurrence && src.recurrence !== 'none') {
+          let nextDue: string | null = null;
+          if (src.due_date) {
+            const d = new Date(src.due_date);
+            if (src.recurrence === 'daily') d.setDate(d.getDate() + 1);
+            else if (src.recurrence === 'weekly') d.setDate(d.getDate() + 7);
+            else if (src.recurrence === 'monthly') d.setMonth(d.getMonth() + 1);
+            nextDue = d.toISOString().slice(0, 10);
+          }
+          await supabase.from('tasks').insert({
+            title: src.title,
+            description: src.description || null,
+            column_id: src.column_id,
+            position: 0,
+            priority: src.priority,
+            recurrence: src.recurrence,
+            due_date: nextDue,
+            created_by: user!.id,
+            updated_by: user!.id,
+          });
+          toast.success('Next occurrence created');
+        }
+      }
+
       toast.success(isDone ? 'Task marked as done!' : 'Task marked as not done!');
       await loadProject();
     } catch (error: any) {
@@ -606,6 +637,7 @@ export default function ProjectPage() {
     setTaskTitle(task.title);
     setTaskDescription(task.description || '');
     setTaskPriority(task.priority);
+    setTaskRecurrence(((task as any).recurrence as 'none' | 'daily' | 'weekly' | 'monthly') || 'none');
     setTaskDueDate(task.due_date ? task.due_date.split('T')[0] : '');
     setTaskAssignedTo(task.assigned_to || undefined);
     setSelectedColumnId(task.column_id);
@@ -667,6 +699,7 @@ export default function ProjectPage() {
     setTaskTitle('');
     setTaskDescription('');
     setTaskPriority('medium');
+    setTaskRecurrence('none');
     setTaskDueDate('');
     setTaskAssignedTo(undefined); // FIXED: Use undefined instead of empty string
     setSelectedColumnId('');
@@ -1050,6 +1083,21 @@ export default function ProjectPage() {
                 </Select>
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="editRecurrence">Repeat</Label>
+                <Select value={taskRecurrence} onValueChange={(value: 'none' | 'daily' | 'weekly' | 'monthly') => setTaskRecurrence(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Doesn&apos;t repeat</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="editDueDate">Due Date</Label>
                 <Input
