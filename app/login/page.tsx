@@ -76,14 +76,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20 p-4">
       <Card className="w-full max-w-md relative overflow-hidden">
-      <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} />
+      <ShineBorder shineColor={["#bef264", "#a3e635", "#65a30d"]} />
 
         <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
                 <Image 
                   src={theme === 'light' ? '/ekgo-wordmark-light.svg' : '/ekgo-wordmark.svg'} 
-                  width={50} 
-                  height={50} 
+                  width={140} 
+                  height={35} 
                   alt="EKGO! Tasks" 
                 />
               </div>
@@ -126,12 +126,6 @@ export default function LoginPage() {
             <span className="text-muted-foreground">Don't have an account? </span>
             <Link href="/signup" className="text-primary hover:underline">
               Sign up
-            </Link>
-          </div>
-          
-          <div className="mt-4 text-center text-sm">
-            <Link href="/forgot-password" className="text-primary hover:underline">
-              Forgot your password?
             </Link>
           </div>
         </CardContent>

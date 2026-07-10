@@ -214,8 +214,8 @@ export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
           <Link href="/" className="flex items-center">
       <Image 
                   src={theme === 'dark' ? '/ekgo-wordmark.svg' : '/ekgo-wordmark-light.svg'} 
-                  width={40} 
-                  height={40} 
+                  width={120} 
+                  height={30} 
                   alt="EKGO! Tasks" 
                 />
                 <span className="text-lg">EKGO! Tasks</span>

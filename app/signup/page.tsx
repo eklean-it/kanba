@@ -82,13 +82,13 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20 p-4">
       <Card className="w-full max-w-md relative overflow-hidden">
-      <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} />
+      <ShineBorder shineColor={["#bef264", "#a3e635", "#65a30d"]} />
         <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
                 <Image 
                   src={theme === 'light' ? '/ekgo-wordmark-light.svg' : '/ekgo-wordmark.svg'} 
-                  width={50} 
-                  height={50} 
+                  width={140} 
+                  height={35} 
                   alt="EKGO! Tasks" 
                 />
               </div>
@@ -146,16 +146,6 @@ export default function SignUpPage() {
             </Link>
           </div>
           
-          <div className="mt-4 text-center text-xs text-muted-foreground">
-            By creating an account, you agree to our{' '}
-            <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>
