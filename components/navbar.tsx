@@ -59,10 +59,10 @@ export function Navbar({ user, onSignOut, loading = false }: NavbarProps) {
             <Link href="/" className="flex items-center space-x-2">
               <div className=" flex items-center gap-x-2">
                 <Image 
-                  src={theme === 'light' ? '/logo-light.png' : '/logo-dark.png'} 
+                  src={theme === 'light' ? '/ekgo-wordmark-light.svg' : '/ekgo-wordmark.svg'} 
                   width={40} 
                   height={40} 
-                  alt="Kanba Logo" 
+                  alt="EKGO! Tasks" 
                 />
                 <Badge variant="outline" className="hidden sm:inline-flex text-xs text-gray-500 border border-gray-200 dark:border-gray-700 dark:text-gray-400 rounded-full">Beta</Badge>
               </div>

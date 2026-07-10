@@ -115,13 +115,13 @@ export default function SharePage({ params }: { params: { token: string } }) {
             This board is view only. Built with <Link href="/" className="flex items-center">
               <div className=" flex items-center">
                 <Image 
-                  src={theme === 'light' ? '/logo-light.png' : '/logo-dark.png'} 
+                  src={theme === 'light' ? '/ekgo-wordmark-light.svg' : '/ekgo-wordmark.svg'} 
                   width={30} 
                   height={30} 
-                  alt="Kanba Logo" 
+                  alt="EKGO! Tasks" 
                 />
               </div>
-             <span className="font-semibold">Kanba.</span></Link>
+             <span className="font-semibold">EKGO! Tasks</span></Link>
           </div>
         </div>
       </div>

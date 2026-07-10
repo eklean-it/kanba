@@ -77,8 +77,8 @@ export default function NewProjectPage() {
   };
 
   const canCreateProject = () => {
-    if (!profile) return false;
-    return profile.subscription_status === 'pro' || projectCount < 1;
+    // EKGO: internal tool — unlimited projects for the whole team, no paywall.
+    return true;
   };
 
   // Generate slug from project name

@@ -153,9 +153,8 @@ export default function DashboardPage() {
   };
 
   const canCreateProject = () => {
-    if (!profile) return false;
-    const ownedProjects = projects.filter(p => p.user_id === user?.id);
-    return profile.subscription_status === 'pro' || ownedProjects.length < 1;
+    // EKGO: internal tool — unlimited projects for the whole team, no paywall.
+    return true;
   };
 
   const getProjectRole = (project: Project) => {
@@ -279,7 +278,7 @@ export default function DashboardPage() {
                 <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <CardTitle className="mb-2">No projects yet</CardTitle>
                 <CardDescription className="mb-4">
-                  Create your first project to get started with Kanba
+                  Create your first project to get started with EKGO! Tasks
                 </CardDescription>
                 <Button onClick={() => router.push('/dashboard/projects/new')}>
                   <Plus className="h-4 w-4 mr-2" />

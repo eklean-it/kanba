@@ -260,7 +260,7 @@ export function TeamManagement({ projectId, userSubscriptionStatus, isProjectOwn
 
       if (!existingUser) {
         toast.error(
-          `No user found with email "${inviteEmail}". They need to create a Kanban account first.`,
+          `No user found with email "${inviteEmail}". They need to create a EKGO! Tasks account first.`,
           {
             description: 'Ask them to sign up first, then try adding them again.',
             duration: 6000,
@@ -426,7 +426,7 @@ export function TeamManagement({ projectId, userSubscriptionStatus, isProjectOwn
                   <DialogHeader>
                     <DialogTitle>Invite Team Member</DialogTitle>
                     <DialogDescription>
-                      Search for existing Kanba users by email to add them to your project.
+                      Search for existing EKGO! Tasks users by email to add them to your project.
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleInviteMember} className="space-y-4">
@@ -497,7 +497,7 @@ export function TeamManagement({ projectId, userSubscriptionStatus, isProjectOwn
                             <div>
                               <p className="text-sm font-medium">No users found</p>
                               <p className="text-xs">
-                                The person needs to create a Kanba account first.
+                                The person needs to create an EKGO! Tasks account first.
                               </p>
                             </div>
                           </div>
@@ -505,7 +505,7 @@ export function TeamManagement({ projectId, userSubscriptionStatus, isProjectOwn
                       )}
 
                       <p className="text-xs text-muted-foreground">
-                        Only users who already have Kanba accounts can be added to projects.
+                        Only users who already have EKGO! Tasks accounts can be added to projects.
                       </p>
                     </div>
                     

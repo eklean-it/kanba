@@ -99,7 +99,6 @@ const menuItems = [
   { title: "AI Planner (soon)", url: "/dashboard/integrations", icon: Brain, disabled: true },
   { title: "Meetings (soon)", url: "/dashboard/integrations", icon: Calendar, disabled: true },
   { title: "Settings", url: "/dashboard/settings", icon: SettingsIcon },
-  { title: "Billing", url: "/dashboard/billing", icon: CreditCardIcon },
 ]
 
 export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
@@ -214,12 +213,12 @@ export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
         <div className="flex items-center gap-x-2">
           <Link href="/" className="flex items-center">
       <Image 
-                  src={theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'} 
+                  src={theme === 'dark' ? '/ekgo-wordmark.svg' : '/ekgo-wordmark-light.svg'} 
                   width={40} 
                   height={40} 
-                  alt="Kanba Logo" 
+                  alt="EKGO! Tasks" 
                 />
-                <span className="text-lg">Kanba</span>
+                <span className="text-lg">EKGO! Tasks</span>
                 </Link>
                 <Badge variant="outline" className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 dark:text-gray-400 rounded-full">Beta</Badge>
 

@@ -104,7 +104,7 @@ CREATE TRIGGER refresh_after_project_creation
 DROP TRIGGER IF EXISTS refresh_after_member_change ON project_members;
 CREATE TRIGGER refresh_after_member_change
   AFTER INSERT OR UPDATE OR DELETE ON project_members
-  FOR EACH ROW EXECUTE FUNCTION refresh_user_accessible_projects();
+  FOR EACH ROW EXECUTE FUNCTION refresh_after_project_change();
 
 -- Test that the policies work correctly
 DO $$

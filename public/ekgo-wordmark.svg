@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120" aria-label="EKGO!">
+  
+  <text x="0" y="98" font-family="Manrope, system-ui, sans-serif" font-weight="800" font-size="120" letter-spacing="-6" fill="#fafaf7">EKGO</text>
+  <g transform="translate(400,12) scale(0.9)">
+    <path d="M 38 4 L 62 4 L 64 60 L 36 60 Z" fill="#fafaf7"></path>
+    <path d="M 50 70 C 32 70, 22 84, 22 92 C 22 99, 35 99, 50 99 C 65 99, 78 99, 78 92 C 78 84, 68 70, 50 70 Z" fill="#bef264"></path>
+  </g>
+</svg>

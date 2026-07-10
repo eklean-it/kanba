@@ -105,15 +105,15 @@ export default function SignUpPage() {
         <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
                 <Image 
-                  src={theme === 'light' ? '/logo-light.png' : '/logo-dark.png'} 
+                  src={theme === 'light' ? '/ekgo-wordmark-light.svg' : '/ekgo-wordmark.svg'} 
                   width={50} 
                   height={50} 
-                  alt="Kanba Logo" 
+                  alt="EKGO! Tasks" 
                 />
               </div>
-          <CardTitle className="text-2xl">Welcome to Kanba</CardTitle>
+          <CardTitle className="text-2xl">Welcome to EKGO! Tasks</CardTitle>
           <CardDescription>
-            Create your account and get started with Kanba today
+            Create your account and get started with EKGO! Tasks today
           </CardDescription>
         </CardHeader>
         <CardContent>
