@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { TaskAttachments } from '@/components/task-attachments';
 import {
   Dialog,
   DialogContent,
@@ -1008,7 +1009,13 @@ export default function ProjectPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
+            {editingTask && project && (
+              <div className="border-t pt-4">
+                <TaskAttachments taskId={editingTask.id} projectId={project.id} />
+              </div>
+            )}
+
             <div className="flex gap-3 pt-4">
               <Button type="submit" size="xs" disabled={creating} className="flex-1">
                 {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
