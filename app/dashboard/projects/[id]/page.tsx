@@ -18,6 +18,8 @@ import { ArchivedTasks } from '@/components/archived-tasks';
 import { TaskChecklist } from '@/components/task-checklist';
 import { TaskDependencies } from '@/components/task-dependencies';
 import { TaskCustomFields } from '@/components/task-custom-fields';
+import { fetchAllRows } from '@/lib/fetch-all';
+import { MondayImport } from '@/components/monday-import';
 import {
   Dialog,
   DialogContent,
@@ -187,32 +189,27 @@ export default function ProjectPage() {
 
       if (columnsError) throw columnsError;
 
-      // Get tasks for each column with assigned user info
-      const columnsWithTasks = await Promise.all(
-        columns.map(async (column) => {
-          const { data: tasks, error: tasksError } = await supabase
-            .from('tasks')
-            .select(`
-              *,
-              profiles:assigned_to (
-                id,
-                email,
-                full_name,
-                avatar_url
-              )
-            `)
-            .eq('column_id', column.id)
-            .eq('archived', false)
-            .order('position');
-
-          if (tasksError) throw tasksError;
-
-          return {
-            ...column,
-            tasks: tasks || [],
-          };
-        })
-      );
+      // Load ALL tasks for the board in one paged query (no N+1, beats the
+      // 1000-row cap), then group by column.
+      const columnIds = (columns || []).map((c: any) => c.id);
+      const allTasks = columnIds.length
+        ? await fetchAllRows((from, to) =>
+            supabase
+              .from('tasks')
+              .select(`*, profiles:assigned_to ( id, email, full_name, avatar_url )`)
+              .in('column_id', columnIds)
+              .eq('archived', false)
+              .order('column_id')
+              .order('position')
+              .range(from, to)
+          )
+        : [];
+      const tasksByColumn: Record<string, any[]> = {};
+      (allTasks as any[]).forEach((t) => { (tasksByColumn[t.column_id] ||= []).push(t); });
+      const columnsWithTasks = (columns || []).map((column: any) => ({
+        ...column,
+        tasks: tasksByColumn[column.id] || [],
+      }));
 
       // Attach labels to each task (for card chips + filtering)
       const { data: taskLabelRows } = await supabase
@@ -942,6 +939,7 @@ export default function ProjectPage() {
             </p>
           </div>
           <div className="flex items-center space-x-2">
+            <MondayImport projectId={project.id} columns={columns} members={projectMembers} onDone={loadProject} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -957,7 +955,7 @@ export default function ProjectPage() {
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled>
+                <DropdownMenuItem disabled className="hidden">
                   <Code className="h-4 w-4 mr-2" />
                   Embed (soon)
                 </DropdownMenuItem>
