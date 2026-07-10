@@ -1062,7 +1062,7 @@ export default function ProjectPage() {
             </div>
 
             {editingTask && project && (
-              <TaskAssignees taskId={editingTask.id} projectId={project.id} members={projectMembers} />
+              <TaskAssignees taskId={editingTask.id} projectId={project.id} members={projectMembers} taskTitle={editingTask.title} />
             )}
 
             {editingTask && project && (

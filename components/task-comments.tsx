@@ -100,6 +100,28 @@ export function TaskComments({ taskId, currentUserId }: TaskCommentsProps) {
 
       if (error) throw error;
 
+      // Notify the task's assignees (except the commenter) — keep the team in the loop.
+      try {
+        const { data: assignees } = await supabase.from('task_assignees').select('user_id').eq('task_id', taskId);
+        const recipients = (assignees || [])
+          .map((a: { user_id: string }) => a.user_id)
+          .filter((id: string) => id !== currentUserId);
+        if (recipients.length) {
+          const { data: t } = await supabase.from('tasks').select('title').eq('id', taskId).single();
+          await supabase.from('notifications').insert(
+            recipients.map((uid: string) => ({
+              user_id: uid,
+              type: 'comment_added',
+              title: 'New comment',
+              message: `New comment on "${(t as any)?.title || 'a task'}"`,
+              data: { task_id: taskId },
+            }))
+          );
+        }
+      } catch {
+        /* best-effort */
+      }
+
       setNewComment('');
       await loadComments();
       toast.success('Comment added successfully!');

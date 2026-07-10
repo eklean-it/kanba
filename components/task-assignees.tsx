@@ -17,10 +17,12 @@ export function TaskAssignees({
   taskId,
   projectId,
   members,
+  taskTitle,
 }: {
   taskId: string;
   projectId: string;
   members: Member[];
+  taskTitle?: string;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,17 @@ export function TaskAssignees({
           .insert({ task_id: taskId, project_id: projectId, user_id: userId });
         if (error) throw error;
         next.add(userId);
+        // Notify the newly-assigned person (best-effort).
+        const { data: auth } = await supabase.auth.getUser();
+        if (auth.user && auth.user.id !== userId) {
+          supabase.from('notifications').insert({
+            user_id: userId,
+            type: 'task_assigned',
+            title: 'Assigned to you',
+            message: `You were assigned to "${taskTitle || 'a task'}"`,
+            data: { task_id: taskId },
+          });
+        }
       }
       setSelected(next);
       // keep the denormalized primary assignee in sync
