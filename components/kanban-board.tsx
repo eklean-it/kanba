@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   DragDropContext,
   Droppable,
@@ -14,6 +14,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +38,9 @@ import {
   User,
   MessageSquare,
   Check,
+  Search,
+  X,
+  Filter,
 } from 'lucide-react';
 
 import type { Task, Column, ProjectMember } from '@/lib/types';
@@ -44,7 +55,7 @@ interface SortableTaskProps {
   projectMembers: ProjectMember[];
 }
 
-function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone, projectMembers, readOnly }: SortableTaskProps & { readOnly?: boolean }) {
+function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone, projectMembers, readOnly, isDragDisabled }: SortableTaskProps & { readOnly?: boolean; isDragDisabled?: boolean }) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
@@ -56,6 +67,11 @@ function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone,
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString();
   const assignedUser = projectMembers.find(member => member.user_id === task.assigned_to);
+  const due = task.due_date ? new Date(task.due_date) : null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isOverdue = !!due && !task.is_done && due < today;
+  const isDueSoon = !!due && !task.is_done && !isOverdue && (due.getTime() - today.getTime()) / 86400000 <= 2;
 
   const handleToggleDone = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -63,7 +79,7 @@ function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone,
   };
 
   return (
-    <Draggable draggableId={task.id} index={index}>
+    <Draggable draggableId={task.id} index={index} isDragDisabled={isDragDisabled}>
       {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
         <Card
           ref={provided.innerRef}
@@ -126,9 +142,20 @@ function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone,
                 </div>
                 <div className="flex items-center"><User className="h-3 w-3 mr-1" />{assignedUser ? (assignedUser.profiles.full_name || assignedUser.profiles.email) : 'Unassigned'}</div>
               </div>
-              <div className="flex justify-end">
-              {task.due_date && <div className="flex text-xs items-center"><Calendar className="h-3 w-3 mr-1" />{formatDate(task.due_date)}</div>}
-              </div>
+              {due && (
+                <div className="flex justify-end">
+                  <div className={`flex items-center rounded px-1.5 py-0.5 text-xs ${
+                    isOverdue
+                      ? 'bg-destructive/10 text-destructive'
+                      : isDueSoon
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
+                        : 'text-muted-foreground'
+                  }`}>
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {isOverdue ? 'Overdue · ' : ''}{formatDate(task.due_date!)}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -164,10 +191,76 @@ export function KanbanBoard({
   onToggleDone,
   readOnly = false,
 }: KanbanBoardProps) {
+  const [q, setQ] = useState('');
+  const [priority, setPriority] = useState('all');
+  const [assignee, setAssignee] = useState('all');
+  const [dueFilter, setDueFilter] = useState('all');
+  const filterActive = q !== '' || priority !== 'all' || assignee !== 'all' || dueFilter !== 'all';
+  const matches = (task: Task) => {
+    if (q) {
+      const s = q.toLowerCase();
+      if (!((task.title || '').toLowerCase().includes(s) || (task.description || '').toLowerCase().includes(s))) return false;
+    }
+    if (priority !== 'all' && task.priority !== priority) return false;
+    if (assignee !== 'all') {
+      if (assignee === 'unassigned') { if (task.assigned_to) return false; }
+      else if (task.assigned_to !== assignee) return false;
+    }
+    if (dueFilter !== 'all') {
+      const d = task.due_date ? new Date(task.due_date) : null;
+      const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+      if (dueFilter === 'overdue' && !(d && !task.is_done && d < t0)) return false;
+      if (dueFilter === 'none' && d) return false;
+    }
+    return true;
+  };
+  const clearFilters = () => { setQ(''); setPriority('all'); setAssignee('all'); setDueFilter('all'); };
+
   return (
+    <div className="space-y-4">
+      {!readOnly && (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[180px] max-w-xs flex-1">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tasks…" className="h-9 pl-8" />
+          </div>
+          <Select value={priority} onValueChange={setPriority}>
+            <SelectTrigger className="h-9 w-[130px]"><SelectValue placeholder="Priority" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All priorities</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={assignee} onValueChange={setAssignee}>
+            <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder="Assignee" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All assignees</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
+              {projectMembers.map((m) => (
+                <SelectItem key={m.user_id} value={m.user_id}>{m.profiles?.full_name || m.profiles?.email || 'Member'}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={dueFilter} onValueChange={setDueFilter}>
+            <SelectTrigger className="h-9 w-[130px]"><SelectValue placeholder="Due" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any due date</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+              <SelectItem value="none">No due date</SelectItem>
+            </SelectContent>
+          </Select>
+          {filterActive && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9"><X className="mr-1 h-4 w-4" />Clear</Button>
+          )}
+        </div>
+      )}
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex gap-6 overflow-x-auto pb-4">
-        {columns.map((column) => (
+        {columns.map((column) => {
+          const visibleTasks = filterActive ? column.tasks.filter(matches) : column.tasks;
+          return (
           <Droppable key={column.id} droppableId={column.id}>
             {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
               <div
@@ -181,7 +274,7 @@ export function KanbanBoard({
                       <CardTitle className="text-sm font-medium">{column.name}</CardTitle>
                       {!readOnly && (
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-xs">{column.tasks.length}</Badge>
+                          <Badge variant="secondary" className="text-xs">{filterActive ? `${visibleTasks.length}/${column.tasks.length}` : column.tasks.length}</Badge>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm" className="h-6 w-6 p-0"><MoreHorizontal className="h-3 w-3" /></Button>
@@ -194,12 +287,12 @@ export function KanbanBoard({
                         </div>
                       )}
                       {readOnly && (
-                        <Badge variant="secondary" className="text-xs">{column.tasks.length}</Badge>
+                        <Badge variant="secondary" className="text-xs">{filterActive ? `${visibleTasks.length}/${column.tasks.length}` : column.tasks.length}</Badge>
                       )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {column.tasks.map((task, index) => (
+                    {visibleTasks.map((task, index) => (
                       <TaskCard
                         key={task.id}
                         task={task}
@@ -210,6 +303,7 @@ export function KanbanBoard({
                         onToggleDone={onToggleDone}
                         projectMembers={projectMembers}
                         readOnly={readOnly}
+                        isDragDisabled={filterActive}
                       />
                     ))}
                     {provided.placeholder}
@@ -223,8 +317,10 @@ export function KanbanBoard({
               </div>
             )}
           </Droppable>
-        ))}
+          );
+        })}
       </div>
     </DragDropContext>
+    </div>
   );
 }
