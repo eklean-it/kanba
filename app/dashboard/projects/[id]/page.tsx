@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { TaskAttachments } from '@/components/task-attachments';
 import { TaskAssignees } from '@/components/task-assignees';
+import { TaskLabels } from '@/components/task-labels';
 import {
   Dialog,
   DialogContent,
@@ -204,6 +205,19 @@ export default function ProjectPage() {
           };
         })
       );
+
+      // Attach labels to each task (for card chips + filtering)
+      const { data: taskLabelRows } = await supabase
+        .from('task_labels')
+        .select('task_id, labels(id, name, color)')
+        .eq('project_id', project.id);
+      const labelsByTask: Record<string, { id: string; name: string; color: string }[]> = {};
+      (taskLabelRows || []).forEach((r: any) => {
+        if (r.labels) (labelsByTask[r.task_id] ||= []).push(r.labels);
+      });
+      columnsWithTasks.forEach((col: any) => {
+        col.tasks = col.tasks.map((t: any) => ({ ...t, labels: labelsByTask[t.id] || [] }));
+      });
 
       setColumns(columnsWithTasks);
     } catch (error: any) {
@@ -995,6 +1009,10 @@ export default function ProjectPage() {
 
             {editingTask && project && (
               <TaskAssignees taskId={editingTask.id} projectId={project.id} members={projectMembers} />
+            )}
+
+            {editingTask && project && (
+              <TaskLabels taskId={editingTask.id} projectId={project.id} />
             )}
 
             {editingTask && project && (

@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 
 import type { Task, Column, ProjectMember } from '@/lib/types';
+import { labelClass } from '@/lib/label-colors';
 
 interface SortableTaskProps {
   task: Task;
@@ -136,6 +137,13 @@ function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone,
                   {task.description}
                 </p>
               )}
+              {Array.isArray((task as any).labels) && (task as any).labels.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {(task as any).labels.map((l: any) => (
+                    <span key={l.id} className={`rounded-full px-2 py-0.5 text-[10px] ${labelClass(l.color)}`}>{l.name}</span>
+                  ))}
+                </div>
+              )}
               <div className="flex justify-between items-center text-xs text-muted-foreground">
                 <div className="flex items-center space-x-4">
                     <Badge variant="secondary" className={`text-xs ${getPriorityColor(task.priority)}`}><Flag className="h-3 w-3 mr-1" />{task.priority}</Badge>
@@ -195,7 +203,13 @@ export function KanbanBoard({
   const [priority, setPriority] = useState('all');
   const [assignee, setAssignee] = useState('all');
   const [dueFilter, setDueFilter] = useState('all');
-  const filterActive = q !== '' || priority !== 'all' || assignee !== 'all' || dueFilter !== 'all';
+  const [label, setLabel] = useState('all');
+  const allLabels = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    columns.forEach((c) => c.tasks.forEach((t: any) => (t.labels || []).forEach((l: any) => map.set(l.id, { id: l.id, name: l.name }))));
+    return Array.from(map.values());
+  }, [columns]);
+  const filterActive = q !== '' || priority !== 'all' || assignee !== 'all' || dueFilter !== 'all' || label !== 'all';
   const matches = (task: Task) => {
     if (q) {
       const s = q.toLowerCase();
@@ -212,9 +226,10 @@ export function KanbanBoard({
       if (dueFilter === 'overdue' && !(d && !task.is_done && d < t0)) return false;
       if (dueFilter === 'none' && d) return false;
     }
+    if (label !== 'all' && !(((task as any).labels || []).some((l: any) => l.id === label))) return false;
     return true;
   };
-  const clearFilters = () => { setQ(''); setPriority('all'); setAssignee('all'); setDueFilter('all'); };
+  const clearFilters = () => { setQ(''); setPriority('all'); setAssignee('all'); setDueFilter('all'); setLabel('all'); };
 
   return (
     <div className="space-y-4">
@@ -251,6 +266,17 @@ export function KanbanBoard({
               <SelectItem value="none">No due date</SelectItem>
             </SelectContent>
           </Select>
+          {allLabels.length > 0 && (
+            <Select value={label} onValueChange={setLabel}>
+              <SelectTrigger className="h-9 w-[130px]"><SelectValue placeholder="Label" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All labels</SelectItem>
+                {allLabels.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {filterActive && (
             <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9"><X className="mr-1 h-4 w-4" />Clear</Button>
           )}
