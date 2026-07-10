@@ -6,7 +6,7 @@ import { useUser } from '@/components/user-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
 
-type Row = { column_id: string; due_date: string | null; is_done: boolean | null; assigned_to: string | null };
+type Row = { column_id: string; due_date: string | null; is_done: boolean | null; assigned_to: string | null; priority: string | null };
 type ColInfo = { name: string; project_id: string };
 
 function Bars({ data }: { data: { label: string; value: number }[] }) {
@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
     const [{ data: projRows }, { data: colRows }, { data: taskRows }] = await Promise.all([
       supabase.from('projects').select('id, name'),
       supabase.from('columns').select('id, name, project_id'),
-      supabase.from('tasks').select('column_id, due_date, is_done, assigned_to'),
+      supabase.from('tasks').select('column_id, due_date, is_done, assigned_to, priority'),
     ]);
     const projMap: Record<string, string> = {};
     (projRows || []).forEach((p: { id: string; name: string }) => (projMap[p.id] = p.name));
@@ -90,6 +90,7 @@ export default function AnalyticsPage() {
     const byStatus: Record<string, number> = {};
     const byAssignee: Record<string, number> = {};
     const byProject: Record<string, number> = {};
+    const byPriority: Record<string, number> = {};
     for (const t of rows) {
       const done = !!t.is_done;
       if (done) completed++;
@@ -105,6 +106,9 @@ export default function AnalyticsPage() {
 
       const who = t.assigned_to ? people[t.assigned_to] || 'Member' : 'Unassigned';
       byAssignee[who] = (byAssignee[who] || 0) + 1;
+
+      const pr = t.priority || 'none';
+      byPriority[pr] = (byPriority[pr] || 0) + 1;
     }
     const toSorted = (o: Record<string, number>) =>
       Object.entries(o).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
@@ -116,6 +120,7 @@ export default function AnalyticsPage() {
       byStatus: toSorted(byStatus),
       byAssignee: toSorted(byAssignee).slice(0, 10),
       byProject: toSorted(byProject).slice(0, 10),
+      byPriority: toSorted(byPriority),
     };
   }, [rows, cols, projects, people]);
 
@@ -141,10 +146,14 @@ export default function AnalyticsPage() {
         <Kpi icon={<AlertTriangle className="h-5 w-5" />} label="Overdue" value={stats.overdue} tone="bg-destructive/10 text-destructive" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="text-base">By status</CardTitle></CardHeader>
           <CardContent><Bars data={stats.byStatus} /></CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-base">By priority</CardTitle></CardHeader>
+          <CardContent><Bars data={stats.byPriority} /></CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-base">By assignee</CardTitle></CardHeader>

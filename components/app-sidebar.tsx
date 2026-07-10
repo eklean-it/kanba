@@ -29,6 +29,7 @@ import {
   Calendar,
   Bookmark,
   CrownIcon,
+  ListChecks,
 } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { toast } from "sonner"
@@ -92,6 +93,7 @@ interface AppSidebarProps {
 // Menü öğeleri
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "My Tasks", url: "/dashboard/my-tasks", icon: ListChecks },
   { title: "Projects", url: "/dashboard/projects", icon: FolderIcon },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChartIcon },
   { title: "Settings", url: "/dashboard/settings", icon: SettingsIcon },
