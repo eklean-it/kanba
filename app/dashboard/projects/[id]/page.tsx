@@ -305,6 +305,7 @@ export default function ProjectPage() {
 
       if (error) throw error;
 
+      logActivity('created', 'task', task.id, { title: task.title });
       toast.success('Task created successfully!');
       
       // Reset form
@@ -396,6 +397,9 @@ export default function ProjectPage() {
 
       if (error) throw error;
 
+      logActivity(isDone ? 'completed' : 'reopened', 'task', taskId, {
+        title: columns.flatMap((c) => c.tasks).find((x) => x.id === taskId)?.title,
+      });
       toast.success(isDone ? 'Task marked as done!' : 'Task marked as not done!');
       await loadProject();
     } catch (error: any) {
@@ -668,6 +672,23 @@ export default function ProjectPage() {
     setSelectedColumnId('');
   };
 
+  // Best-effort activity log (populates the Activity tab).
+  const logActivity = async (action: string, entityType: string, entityId: string, details: any = {}) => {
+    if (!project?.id || !user?.id) return;
+    try {
+      await supabase.from('activity_logs').insert({
+        project_id: project.id,
+        user_id: user.id,
+        action,
+        entity_type: entityType,
+        entity_id: entityId,
+        details,
+      });
+    } catch {
+      /* non-fatal */
+    }
+  };
+
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
@@ -739,15 +760,20 @@ export default function ProjectPage() {
       
       // Update database
       try {
-        // 1. Update moved task's column and position
+        // 1. Update moved task's column and position.
+        //    Automation: entering a "Done"/"Completed" column auto-marks the
+        //    task done (and leaving one un-marks it).
+        const finishIsDone = /done|complete/i.test(finishColumn.name);
         await supabase
           .from('tasks')
           .update({
             column_id: destination.droppableId,
             position: destination.index,
+            is_done: finishIsDone,
             updated_by: user!.id
           })
           .eq('id', draggableId);
+        logActivity('moved', 'task', draggableId, { title: movedTask.title, to: finishColumn.name });
 
         // 2. Update positions in the source column
         const sourceUpdatePromises = startTasks.map((task, index) =>
