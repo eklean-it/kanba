@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Image from "next/image"
 import { Wordmark } from "@/components/wordmark";
+import { isSuperAdmin } from "@/lib/super-admins";
 import {
   Avatar,
   AvatarFallback,
@@ -92,12 +93,19 @@ interface AppSidebarProps {
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Projects", url: "/dashboard/projects", icon: FolderIcon },
-  { title: "Bookmarks", url: "/dashboard/bookmarks", icon: Bookmark },
   { title: "Settings", url: "/dashboard/settings", icon: SettingsIcon },
 ]
 
 export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
   const { user } = useUser();
+  // Super-admins get an extra "Team" nav item (account provisioning).
+  const navItems = isSuperAdmin(user?.email)
+    ? [
+        ...menuItems.slice(0, -1),
+        { title: "Team", url: "/dashboard/team", icon: UsersIcon },
+        menuItems[menuItems.length - 1],
+      ]
+    : menuItems;
   const router = useRouter();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
@@ -205,12 +213,12 @@ export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
     <Sidebar>
       {/* Üst kısım (Logo veya başlık) */}
       <SidebarHeader>
-        <div className="flex items-center gap-x-2">
-          <Link href="/" className="flex items-center">
-      <Wordmark variant="adaptive" className="h-6 w-auto text-foreground" />
-                <span className="text-sm text-muted-foreground">Tasks</span>
-                </Link>
-                <Badge variant="outline" className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 dark:text-gray-400 rounded-full">Beta</Badge>
+        <div className="flex items-center gap-2 px-1 py-1.5">
+          <Link href="/dashboard" className="flex items-center gap-1.5">
+            <Wordmark variant="adaptive" className="h-6 w-auto text-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Tasks</span>
+          </Link>
+          <Badge variant="outline" className="rounded-full text-[10px] text-muted-foreground">Beta</Badge>
 
                 </div>
       </SidebarHeader>
@@ -226,7 +234,7 @@ export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
+              {navItems.map((item) => {
                 if (item.title === "Bookmarks") {
                   const isPro = userData.subscription === 'pro';
                   return (
