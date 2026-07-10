@@ -252,7 +252,7 @@ export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
                         </SidebarMenuButton>
                       ) : (
                         <SidebarMenuButton
-                          onClick={() => router.push('/dashboard/billing')}
+                          onClick={() => router.push('/dashboard')}
                           className="relative opacity-60 cursor-pointer"
                         >
                           <item.icon className="w-4 h-4" />
