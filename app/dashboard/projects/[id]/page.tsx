@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { TaskAttachments } from '@/components/task-attachments';
 import { TaskAssignees } from '@/components/task-assignees';
 import { TaskLabels } from '@/components/task-labels';
+import { TaskTableView } from '@/components/task-table-view';
+import { TaskCalendarView } from '@/components/task-calendar-view';
 import {
   Dialog,
   DialogContent,
@@ -895,6 +897,8 @@ export default function ProjectPage() {
       <Tabs defaultValue="board" className="space-y-6">
         <TabsList>
           <TabsTrigger value="board">Board</TabsTrigger>
+          <TabsTrigger value="table">Table</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="team">
             <Users className="h-4 w-4 mr-2" />
             Team
@@ -920,8 +924,16 @@ export default function ProjectPage() {
           />
         </TabsContent>
 
+        <TabsContent value="table" className="space-y-6">
+          <TaskTableView columns={columns} projectMembers={projectMembers} onEditTask={openEditTaskDialog} />
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-6">
+          <TaskCalendarView columns={columns} onEditTask={openEditTaskDialog} />
+        </TabsContent>
+
         <TabsContent value="team">
-          <TeamManagement 
+          <TeamManagement
             projectId={project?.id}
             userSubscriptionStatus={profile?.subscription_status || 'free'}
             isProjectOwner={isProjectOwner}
