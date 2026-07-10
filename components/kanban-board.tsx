@@ -43,6 +43,7 @@ import {
   Filter,
   ListChecks,
   Ban,
+  Archive,
 } from 'lucide-react';
 
 import type { Task, Column, ProjectMember } from '@/lib/types';
@@ -53,12 +54,13 @@ interface SortableTaskProps {
   index: number;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onArchive: (taskId: string) => void;
   onViewComments: (task: Task) => void;
   onToggleDone: (taskId: string, isDone: boolean) => void;
   projectMembers: ProjectMember[];
 }
 
-function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone, projectMembers, readOnly, isDragDisabled }: SortableTaskProps & { readOnly?: boolean; isDragDisabled?: boolean }) {
+function TaskCard({ task, index, onEdit, onDelete, onArchive, onViewComments, onToggleDone, projectMembers, readOnly, isDragDisabled }: SortableTaskProps & { readOnly?: boolean; isDragDisabled?: boolean }) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
@@ -124,6 +126,7 @@ function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone,
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onEdit(task)}><Edit className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onViewComments(task)}><MessageSquare className="h-4 w-4 mr-2" />Comments</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onArchive(task.id)}><Archive className="h-4 w-4 mr-2" />Archive</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onDelete(task.id)} className="text-destructive"><Trash2 className="h-4 w-4 mr-2" />Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -194,6 +197,7 @@ interface KanbanBoardProps {
   onAddTask: (columnId: string) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
+  onArchive: (taskId: string) => void;
   onViewComments: (task: Task) => void;
   onToggleDone: (taskId: string, isDone: boolean) => void;
   readOnly?: boolean;
@@ -208,6 +212,7 @@ export function KanbanBoard({
   onAddTask,
   onEditTask,
   onDeleteTask,
+  onArchive,
   onViewComments,
   onToggleDone,
   readOnly = false,
@@ -338,6 +343,7 @@ export function KanbanBoard({
                         index={index}
                         onEdit={onEditTask}
                         onDelete={onDeleteTask}
+                        onArchive={onArchive}
                         onViewComments={onViewComments}
                         onToggleDone={onToggleDone}
                         projectMembers={projectMembers}

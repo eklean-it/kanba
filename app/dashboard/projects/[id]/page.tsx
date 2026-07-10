@@ -14,6 +14,7 @@ import { TaskAssignees } from '@/components/task-assignees';
 import { TaskLabels } from '@/components/task-labels';
 import { TaskTableView } from '@/components/task-table-view';
 import { TaskCalendarView } from '@/components/task-calendar-view';
+import { ArchivedTasks } from '@/components/archived-tasks';
 import { TaskChecklist } from '@/components/task-checklist';
 import { TaskDependencies } from '@/components/task-dependencies';
 import {
@@ -200,6 +201,7 @@ export default function ProjectPage() {
               )
             `)
             .eq('column_id', column.id)
+            .eq('archived', false)
             .order('position');
 
           if (tasksError) throw tasksError;
@@ -378,6 +380,17 @@ export default function ProjectPage() {
       toast.error(error.message || 'Failed to update task');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleArchiveTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase.from('tasks').update({ archived: true, updated_by: user!.id }).eq('id', taskId);
+      if (error) throw error;
+      toast.success('Task archived');
+      await loadProject();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to archive task');
     }
   };
 
@@ -988,6 +1001,7 @@ export default function ProjectPage() {
           <TabsTrigger value="board">Board</TabsTrigger>
           <TabsTrigger value="table">Table</TabsTrigger>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
+          <TabsTrigger value="archived">Archived</TabsTrigger>
           <TabsTrigger value="team">
             <Users className="h-4 w-4 mr-2" />
             Team
@@ -1008,6 +1022,7 @@ export default function ProjectPage() {
             onAddTask={openTaskDialog}
             onEditTask={openEditTaskDialog}
             onDeleteTask={handleDeleteTask}
+            onArchive={handleArchiveTask}
             onViewComments={openCommentsDialog}
             onToggleDone={handleToggleDone}
           />
@@ -1019,6 +1034,10 @@ export default function ProjectPage() {
 
         <TabsContent value="calendar" className="space-y-6">
           <TaskCalendarView columns={columns} onEditTask={openEditTaskDialog} />
+        </TabsContent>
+
+        <TabsContent value="archived" className="space-y-6">
+          {project && <ArchivedTasks projectId={project.id} onChanged={loadProject} />}
         </TabsContent>
 
         <TabsContent value="team">
