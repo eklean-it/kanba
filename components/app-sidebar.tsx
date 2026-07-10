@@ -43,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Image from "next/image"
+import { Wordmark } from "@/components/wordmark";
 import {
   Avatar,
   AvatarFallback,
@@ -212,13 +213,8 @@ export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
       <SidebarHeader>
         <div className="flex items-center gap-x-2">
           <Link href="/" className="flex items-center">
-      <Image 
-                  src={theme === 'dark' ? '/ekgo-wordmark.svg' : '/ekgo-wordmark-light.svg'} 
-                  width={120} 
-                  height={30} 
-                  alt="EKGO! Tasks" 
-                />
-                <span className="text-lg">EKGO! Tasks</span>
+      <Wordmark variant="adaptive" className="h-6 w-auto text-foreground" />
+                <span className="text-sm text-muted-foreground">Tasks</span>
                 </Link>
                 <Badge variant="outline" className="text-xs text-gray-500 border border-gray-200 dark:border-gray-700 dark:text-gray-400 rounded-full">Beta</Badge>
 

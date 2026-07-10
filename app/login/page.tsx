@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,10 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Kanban, Loader2 } from 'lucide-react';
-import Image from 'next/image'; 
-import { useTheme } from 'next-themes';
+import { Loader2 } from 'lucide-react';
 import { ShineBorder } from '@/src/components/magicui/shine-border';
+import { Wordmark } from '@/components/wordmark';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -21,10 +19,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
-    // Check if user is already logged in
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -38,20 +34,14 @@ export default function LoginPage() {
         setCheckingAuth(false);
       }
     };
-
     checkAuth();
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast.error(error.message);
       } else {
@@ -76,21 +66,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20 p-4">
       <Card className="w-full max-w-md relative overflow-hidden">
-      <ShineBorder shineColor={["#bef264", "#a3e635", "#65a30d"]} />
-
+        <ShineBorder shineColor={["#bef264", "#a3e635", "#65a30d"]} />
         <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
-                <Image 
-                  src={theme === 'light' ? '/ekgo-wordmark-light.svg' : '/ekgo-wordmark.svg'} 
-                  width={140} 
-                  height={35} 
-                  alt="EKGO! Tasks" 
-                />
-              </div>
+          <div className="flex justify-center mb-4">
+            <Wordmark variant="adaptive" className="h-9 w-auto text-foreground" />
+          </div>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in to your EKGO! Tasks account
-          </CardDescription>
+          <CardDescription>Sign in to your EKGO! Tasks account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -121,13 +103,6 @@ export default function LoginPage() {
               Sign In
             </Button>
           </form>
-          
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account? </span>
-            <Link href="/signup" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>
