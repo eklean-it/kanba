@@ -15,6 +15,7 @@ import { TaskLabels } from '@/components/task-labels';
 import { TaskTableView } from '@/components/task-table-view';
 import { TaskCalendarView } from '@/components/task-calendar-view';
 import { TaskChecklist } from '@/components/task-checklist';
+import { TaskDependencies } from '@/components/task-dependencies';
 import {
   Dialog,
   DialogContent,
@@ -236,6 +237,19 @@ export default function ProjectPage() {
       });
       columnsWithTasks.forEach((col: any) => {
         col.tasks = col.tasks.map((t: any) => ({ ...t, checklist: checkByTask[t.id] || { total: 0, done: 0 } }));
+      });
+
+      // Attach blocked-by count (only incomplete blockers count)
+      const { data: depRows } = await supabase
+        .from('task_dependencies')
+        .select('task_id, blocked_by_task_id')
+        .eq('project_id', project.id);
+      const doneById: Record<string, boolean> = {};
+      columnsWithTasks.forEach((col: any) => col.tasks.forEach((t: any) => { doneById[t.id] = !!t.is_done; }));
+      const blockersByTask: Record<string, string[]> = {};
+      (depRows || []).forEach((r: any) => { (blockersByTask[r.task_id] ||= []).push(r.blocked_by_task_id); });
+      columnsWithTasks.forEach((col: any) => {
+        col.tasks = col.tasks.map((t: any) => ({ ...t, blockedBy: (blockersByTask[t.id] || []).filter((bid: string) => !doneById[bid]).length }));
       });
 
       setColumns(columnsWithTasks);
@@ -1119,6 +1133,10 @@ export default function ProjectPage() {
 
             {editingTask && project && (
               <TaskChecklist taskId={editingTask.id} projectId={project.id} />
+            )}
+
+            {editingTask && project && (
+              <TaskDependencies taskId={editingTask.id} projectId={project.id} tasks={columns.flatMap((c) => c.tasks)} />
             )}
 
             {editingTask && project && (

@@ -42,6 +42,7 @@ import {
   X,
   Filter,
   ListChecks,
+  Ban,
 } from 'lucide-react';
 
 import type { Task, Column, ProjectMember } from '@/lib/types';
@@ -149,6 +150,11 @@ function TaskCard({ task, index, onEdit, onDelete, onViewComments, onToggleDone,
                 <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <ListChecks className="h-3 w-3" />
                   {(task as any).checklist.done}/{(task as any).checklist.total}
+                </div>
+              )}
+              {(task as any).blockedBy > 0 && (
+                <div className="inline-flex w-fit items-center gap-1 rounded bg-destructive/10 px-1.5 py-0.5 text-[11px] text-destructive">
+                  <Ban className="h-3 w-3" />Blocked
                 </div>
               )}
               <div className="flex justify-between items-center text-xs text-muted-foreground">
