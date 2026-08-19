@@ -5,6 +5,7 @@ import {
   LayoutDashboardIcon,
   FolderIcon,
   UsersIcon,
+  LayoutGridIcon,
   BarChartIcon,
   SettingsIcon,
   HelpCircleIcon,
@@ -90,8 +91,17 @@ interface AppSidebarProps {
   onProjectUpdate?: (action: 'rename' | 'delete', projectId?: string) => void;
 }
 
-// Menü öğeleri
-const menuItems = [
+// Menü öğeleri.
+// Typed explicitly because the render loop has a `if (item.disabled)` branch —
+// no item sets it today, so an inferred type made that branch a type error.
+type NavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  disabled?: boolean;
+};
+
+const menuItems: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "My Tasks", url: "/dashboard/my-tasks", icon: ListChecks },
   { title: "Projects", url: "/dashboard/projects", icon: FolderIcon },
@@ -102,9 +112,14 @@ const menuItems = [
 export function AppSidebar({ onSignOut, onProjectUpdate }: AppSidebarProps) {
   const { user } = useUser();
   // Super-admins get an extra "Team" nav item (account provisioning).
-  const navItems = isSuperAdmin(user?.email)
+  // Super-admins get two extra nav items: Team (account provisioning) and All
+  // boards (every board in the workspace). Both must appear here AND be routed,
+  // or the page becomes unreachable and reads as a dead link — which is exactly
+  // how /dashboard/team got reported on 2026-08-18.
+  const navItems: NavItem[] = isSuperAdmin(user?.email)
     ? [
         ...menuItems.slice(0, -1),
+        { title: "All boards", url: "/dashboard/boards", icon: LayoutGridIcon },
         { title: "Team", url: "/dashboard/team", icon: UsersIcon },
         menuItems[menuItems.length - 1],
       ]
