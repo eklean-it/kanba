@@ -30,7 +30,15 @@ async function authHeader() {
 export default function TeamPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [allowed, setAllowed] = useState(false);
+  // Three states, not two. This page used to spin and then silently
+  // router.replace('/dashboard') for anyone off the super-admin list, which
+  // reads exactly like a dead link — Erykah, 2026-08-18: "I am trying to add the
+  // team to EK Task manager. Jared said the link can not be found." Jared is not
+  // on the list, so the page bounced him with no explanation. Say why instead.
+  const [access, setAccess] = useState<'resolving' | 'allowed' | 'denied'>(
+    'resolving',
+  );
+  const allowed = access === 'allowed';
   const [users, setUsers] = useState<TeamUser[]>([]);
   const [listLoading, setListLoading] = useState(true);
   const [fullName, setFullName] = useState('');
@@ -39,14 +47,15 @@ export default function TeamPage() {
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [credential, setCredential] = useState<{ email: string; password: string } | null>(null);
 
-  // Gate: super-admins only. Wait for auth to resolve before deciding.
+  // Gate: super-admins only. Wait for auth to resolve before deciding. Signed-out
+  // visitors still go to login; a signed-in non-admin stays here and gets told.
   useEffect(() => {
     if (loading) return;
-    if (!user || !isSuperAdmin(user.email)) {
-      router.replace('/dashboard');
+    if (!user) {
+      router.replace('/login');
       return;
     }
-    setAllowed(true);
+    setAccess(isSuperAdmin(user.email) ? 'allowed' : 'denied');
   }, [user, loading, router]);
 
   const loadUsers = useCallback(async () => {
@@ -115,6 +124,36 @@ export default function TeamPage() {
     navigator.clipboard.writeText(text);
     toast.success('Copied');
   };
+
+  if (access === 'denied') {
+    return (
+      <div className="mx-auto max-w-lg p-6 md:p-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+              Team is admin-only
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm text-muted-foreground">
+            <p>
+              Provisioning accounts is restricted to EKGO admins, so this page is
+              hidden from the sidebar for everyone else. Nothing is broken and the
+              link is correct — your account just isn&apos;t on the list.
+            </p>
+            <p>
+              You&apos;re signed in as{' '}
+              <span className="font-medium text-foreground">{user?.email}</span>.
+              Ask Tobi or Erykah to add someone, or to add you here.
+            </p>
+            <Button variant="outline" onClick={() => router.push('/dashboard')}>
+              Back to dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!allowed) {
     return (
