@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Copy, UserPlus, KeyRound, ShieldCheck } from 'lucide-react';
+import { Loader2, Copy, UserPlus, KeyRound, ShieldCheck, Ban, RotateCcw } from 'lucide-react';
 
 type TeamUser = {
   id: string;
@@ -20,6 +20,7 @@ type TeamUser = {
   created_at: string;
   last_sign_in_at: string | null;
   is_super_admin: boolean;
+  disabled: boolean;
 };
 
 async function authHeader() {
@@ -45,6 +46,7 @@ export default function TeamPage() {
   const [email, setEmail] = useState('');
   const [creating, setCreating] = useState(false);
   const [resettingId, setResettingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [credential, setCredential] = useState<{ email: string; password: string } | null>(null);
 
   // Gate: super-admins only. Wait for auth to resolve before deciding. Signed-out
@@ -117,6 +119,40 @@ export default function TeamPage() {
       toast.error(e instanceof Error ? e.message : 'Failed to reset password');
     } finally {
       setResettingId(null);
+    }
+  };
+
+  // Offboarding. Deliberately a ban, not a delete: auth.users cascades through
+  // profiles → projects → columns → tasks, so deleting a departing employee
+  // would silently destroy every board they own and everything on it. A ban
+  // blocks sign-in, keeps all data, and is reversible.
+  const handleToggleDisabled = async (u: TeamUser) => {
+    const action = u.disabled ? 'enable' : 'disable';
+    if (
+      action === 'disable' &&
+      !confirm(
+        `Block ${u.email} from signing in?\n\nTheir boards, tasks and comments are all kept — this only stops them logging in, and you can undo it.`,
+      )
+    ) {
+      return;
+    }
+    setTogglingId(u.id);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+        body: JSON.stringify({ user_id: u.id, action }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || `Failed to ${action} account`);
+      toast.success(
+        action === 'disable' ? `${u.email} can no longer sign in` : `${u.email} can sign in again`,
+      );
+      loadUsers();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : `Failed to ${action} account`);
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -249,12 +285,21 @@ export default function TeamPage() {
                           <ShieldCheck className="h-3 w-3" /> Super-admin
                         </Badge>
                       )}
+                      {u.disabled && (
+                        <Badge variant="destructive" className="gap-1 text-xs">
+                          <Ban className="h-3 w-3" /> Sign-in blocked
+                        </Badge>
+                      )}
                     </div>
                     <div className="truncate text-sm text-muted-foreground">{u.email}</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground">
-                      {u.last_sign_in_at ? 'active' : 'never signed in'}
+                      {u.disabled
+                        ? 'blocked'
+                        : u.last_sign_in_at
+                          ? 'active'
+                          : 'never signed in'}
                     </span>
                     <Button
                       size="sm"
@@ -269,6 +314,27 @@ export default function TeamPage() {
                       )}
                       Reset password
                     </Button>
+                    {/* No delete button, on purpose — auth.users cascades
+                        through profiles → projects → columns → tasks, so
+                        deleting someone would destroy every board they own. */}
+                    {!u.is_super_admin && (
+                      <Button
+                        size="sm"
+                        variant={u.disabled ? 'outline' : 'ghost'}
+                        onClick={() => handleToggleDisabled(u)}
+                        disabled={togglingId === u.id}
+                        className={u.disabled ? '' : 'text-destructive hover:text-destructive'}
+                      >
+                        {togglingId === u.id ? (
+                          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                        ) : u.disabled ? (
+                          <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                        ) : (
+                          <Ban className="mr-1 h-3.5 w-3.5" />
+                        )}
+                        {u.disabled ? 'Allow sign-in' : 'Block sign-in'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
