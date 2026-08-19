@@ -97,6 +97,9 @@ export default function SharePage({ params }: { params: { token: string } }) {
           <h1 className="text-3xl font-bold mb-2 px-4 pt-4">{project.name}</h1>
           <p className="mb-6 text-muted-foreground px-4">{project.description}</p>
           <div className="flex-1 overflow-auto px-2 pb-4  border-b">
+            {/* onArchive is required by KanbanBoardProps but unreachable here:
+                the Archive menu item renders inside {!readOnly && ...} and this
+                view passes readOnly. Wired to the same noop as the rest. */}
             <KanbanBoard
               columns={columns}
               projectMembers={[]}
@@ -106,6 +109,7 @@ export default function SharePage({ params }: { params: { token: string } }) {
               onAddTask={noop}
               onEditTask={noop}
               onDeleteTask={noop}
+              onArchive={noop}
               onViewComments={noop}
               onToggleDone={noop}
               readOnly={true}

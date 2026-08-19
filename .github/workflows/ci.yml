@@ -1,0 +1,74 @@
+name: CI
+
+# This repo shipped V1 on 2026-07-10 with no CI and no tests at all, which is a
+# poor place to be for the tool the whole team is moving onto — a bad push would
+# only be discovered by someone hitting the site. Typecheck, lint, tests and a
+# real build now run on every push and PR.
+#
+# Deploys are NOT here: Vercel builds from git automatically for this project.
+# This workflow's job is to fail loudly BEFORE that happens.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "LICENSE"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "LICENSE"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck + Lint + Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      # Prisma client is generated in the build script; generate it up front so
+      # typecheck sees the same types the build will.
+      - run: npx prisma generate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+  build:
+    name: Next.js build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      # A Next build needs the public Supabase vars present at build time or
+      # pages that construct the client at module scope fail. These are the
+      # PUBLIC values (safe in CI); the service-role key is never needed to
+      # build and is deliberately absent so a build can't touch real data.
+      - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+        run: npm run build
