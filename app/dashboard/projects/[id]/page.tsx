@@ -381,6 +381,27 @@ export default function ProjectPage() {
     }
   };
 
+  // One inline cell edit from the Table view. The patch has already been
+  // validated by buildInlinePatch, so this only has to write it, stamp the
+  // editor, and reload. Errors surface as a toast — an inline edit gives no
+  // other feedback that the save failed.
+  const handleInlineTaskUpdate = async (
+    taskId: string,
+    patch: Record<string, unknown>,
+  ) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ ...patch, updated_by: user!.id })
+        .eq('id', taskId);
+      if (error) throw error;
+      await loadProject();
+    } catch (error: any) {
+      console.error('Error updating task inline:', error);
+      toast.error(error.message || 'Failed to save that change');
+    }
+  };
+
   const handleArchiveTask = async (taskId: string) => {
     try {
       const { error } = await supabase.from('tasks').update({ archived: true, updated_by: user!.id }).eq('id', taskId);
@@ -1044,7 +1065,7 @@ export default function ProjectPage() {
         </TabsContent>
 
         <TabsContent value="table" className="space-y-6">
-          <TaskTableView columns={columns} projectMembers={projectMembers} onEditTask={openEditTaskDialog} onBulkArchive={handleBulkArchive} onBulkDelete={handleBulkDelete} />
+          <TaskTableView columns={columns} projectMembers={projectMembers} onEditTask={openEditTaskDialog} onBulkArchive={handleBulkArchive} onBulkDelete={handleBulkDelete} onInlineUpdate={handleInlineTaskUpdate} />
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-6">
@@ -1232,7 +1253,10 @@ export default function ProjectPage() {
 
       {/* Task Comments Dialog */}
       <Dialog open={commentsDialogOpen} onOpenChange={setCommentsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        {/* Height cap + scrolling now come from DialogContent itself, for every
+            dialog rather than only this one. Overriding overflow here would put
+            the scroll back on the shell and carry the close button away. */}
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <MessageSquare className="h-5 w-5 mr-2" />
