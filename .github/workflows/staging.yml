@@ -44,6 +44,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm install --global npm@11.6.4
       - run: npm ci
       - name: Install pinned deployment CLI
         run: npm install --global vercel@59.19.1

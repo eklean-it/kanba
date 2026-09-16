@@ -1,6 +1,6 @@
 # Tasks release workflow
 
-CI validates types, lint, tests, strict builds and production dependency security.
+CI validates types, lint, tests, strict builds and dependency security.
 Staging requires a successful current-main CI SHA. It validates that both the
 Supabase URL and Prisma database URL point to a dedicated **tasks staging**
 project; the operational app databases and tasks production are rejected.
@@ -19,9 +19,17 @@ Both environments need `VERCEL_TOKEN`; staging also needs `AUDIT_EMAIL`,
 public and server Supabase keys plus `DATABASE_URL`. Payment credentials must be
 sandbox-only. No automatic migrations or data copies are performed here.
 
-Vercel Git auto-deploy bypasses these workflows until it is disabled in the
-actual project. Disable automatic production Git deployment before merging any
+`vercel.json` disables Git-triggered deployments from all branches once this configuration is read.
+Verify no Git production deployment appears for that merge before calling the
+bypass closed; manual CLI deployment is unaffected. Disable automatic production Git deployment before merging any
 change intended only for staging; current production keeps serving. Configure
 main-only environments/reviewers if the GitHub plan supports them. No live
 Vercel setting was changed by this patch. Current available EKGO Vercel auth
 returned 403, so project discovery and activation require corrected credentials.
+
+All automatic Git deployments are disabled, including PR previews, so preview
+database isolation is checked by the workflow before a preview is published.
+
+Builds use Node 22 and npm 11.6.4. CI also runs the built application against
+placeholder data, checking hydration, route parameters and unauthorized API
+access. Database schema changes remain outside these deployment workflows.

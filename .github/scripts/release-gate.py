@@ -116,6 +116,10 @@ def main():
         Path('staging-provenance.json').write_text(json.dumps(data, indent=2) + '\n')
         emit('sha', data['sha'])
     else:
+        if os.environ.get('GITHUB_RUN_ID'):
+            run = api(f"actions/runs/{os.environ['GITHUB_RUN_ID']}")
+            if run.get('head_sha') != args.sha or run.get('head_branch') != 'main':
+                raise ValueError('Staging workflow run SHA differs from deployed source; run staging again')
         data = {'schema_version': 1, 'sha': args.sha, 'repository': os.environ['GITHUB_REPOSITORY']}
         if Path('functions').is_dir():
             data['functions'] = sorted(p.parent.name for p in Path('functions').glob('*/index.ts'))

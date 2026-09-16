@@ -44,6 +44,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm install --global npm@11.6.4
       - run: npm ci
       - run: npm install --global vercel@59.19.1
       # NEXT_PUBLIC values are compiled into the browser bundle. Rebuild exactly
