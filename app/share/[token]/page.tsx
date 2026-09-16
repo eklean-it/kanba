@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { supabase } from '@/lib/supabase';
 import { KanbanBoard } from '@/components/kanban-board';
 import { useTheme } from 'next-themes';
@@ -14,7 +15,8 @@ import {
   import { Button } from "@/components/ui/button";
 
 
-export default function SharePage({ params }: { params: { token: string } }) {
+export default function SharePage() {
+  const params = useParams<{ token: string }>();
   const [project, setProject] = useState<any>(null);
   const [columns, setColumns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

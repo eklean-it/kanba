@@ -44,3 +44,8 @@ next-env.d.ts
 .idea/
 *.swp
 *.swo
+
+# Local release verification artifacts
+test-results/
+playwright-report/
+__pycache__/

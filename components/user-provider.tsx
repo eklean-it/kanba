@@ -59,6 +59,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         console.error('Error getting initial user:', error);
       } finally {
         setInitialized(true);
+        setLoading(false);
       }
     };
 
@@ -101,4 +102,4 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       {children}
     </UserContext.Provider>
   );
-} 
+}

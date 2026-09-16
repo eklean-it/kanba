@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import * as XLSX from 'xlsx';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -42,6 +41,7 @@ export function MondayImport({
     if (!file) return;
     setParsing(true);
     try {
+      const XLSX = await import('xlsx');
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: 'array', cellDates: true });
       const sheet = wb.Sheets[wb.SheetNames[0]];

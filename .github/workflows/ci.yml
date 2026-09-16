@@ -1,19 +1,8 @@
 name: CI
 
-# This repo shipped V1 on 2026-07-10 with no CI and no tests at all, which is a
-# poor place to be for the tool the whole team is moving onto — a bad push would
-# only be discovered by someone hitting the site. Typecheck, lint, tests and a
-# real build now run on every push and PR.
-#
-# Deploys are NOT here: Vercel builds from git automatically for this project.
-# This workflow's job is to fail loudly BEFORE that happens.
-
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - "**/*.md"
-      - "LICENSE"
   pull_request:
     paths-ignore:
       - "**/*.md"
@@ -23,23 +12,33 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+
 jobs:
   verify:
     name: Typecheck + Lint + Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
 
+      - run: npm install --global npm@11.6.4
       - run: npm ci
 
       # Prisma client is generated in the build script; generate it up front so
       # typecheck sees the same types the build will.
       - run: npx prisma generate
+
+      - name: Release safety tests
+        run: python3 -m unittest discover -s .github/scripts/tests -v
 
       - name: Typecheck
         run: npm run typecheck
@@ -54,13 +53,14 @@ jobs:
     name: Next.js build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
 
+      - run: npm install --global npm@11.6.4
       - run: npm ci
 
       # A Next build needs the public Supabase vars present at build time or
@@ -69,6 +69,25 @@ jobs:
       # build and is deliberately absent so a build can't touch real data.
       - name: Build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
         run: npm run build
+      - run: npx playwright install chromium --with-deps
+      - name: Built-app framework and authorization smoke
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+        run: npx playwright test
+
+  security:
+    name: Dependency security audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm install --global npm@11.6.4
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=high

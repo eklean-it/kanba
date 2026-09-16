@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../prisma/generated/client';
 import type { Database } from '../supabase';
 
 // Initialize Prisma client
@@ -152,7 +152,9 @@ export const postgresAdapter: PostgresDatabase = {
     select: (columns?: string) => new PostgresQueryBuilderWithInclude<Database['public']['Tables']['profiles']['Row']>('profiles'),
     insert: async (data) => {
       try {
-        const result = await prisma.profile.create({ data });
+        const { subscription_status } = data;
+        if (subscription_status === null) throw new Error('Subscription status cannot be null.');
+        const result = await prisma.profile.create({ data: { ...data, subscription_status } });
         return { data: result as any, error: null };
       } catch (error) {
         return { data: null, error };
@@ -160,24 +162,18 @@ export const postgresAdapter: PostgresDatabase = {
     },
     update: async (data) => {
       try {
-        const { id, ...updateData } = data;
+        const { id, subscription_status, ...updateData } = data;
+        if (subscription_status === null) throw new Error('Subscription status cannot be null.');
         const result = await prisma.profile.update({
           where: { id: id! },
-          data: updateData,
+          data: { ...updateData, subscription_status },
         });
         return { data: result as any, error: null };
       } catch (error) {
         return { data: null, error };
       }
     },
-    delete: async () => {
-      try {
-        const result = await prisma.profile.deleteMany();
-        return { data: result, error: null };
-      } catch (error) {
-        return { data: null, error };
-      }
-    },
+    delete: async () => ({ data: null, error: new Error('Unscoped deletion is disabled. Use an authorized operation with an explicit row ID.') }),
   },
   projects: {
     select: (columns?: string) => new PostgresQueryBuilderWithInclude<Database['public']['Tables']['projects']['Row']>('projects'),
@@ -201,14 +197,7 @@ export const postgresAdapter: PostgresDatabase = {
         return { data: null, error };
       }
     },
-    delete: async () => {
-      try {
-        const result = await prisma.project.deleteMany();
-        return { data: result, error: null };
-      } catch (error) {
-        return { data: null, error };
-      }
-    },
+    delete: async () => ({ data: null, error: new Error('Unscoped deletion is disabled. Use an authorized operation with an explicit row ID.') }),
   },
   columns: {
     select: (columns?: string) => new PostgresQueryBuilderWithInclude<Database['public']['Tables']['columns']['Row']>('columns'),
@@ -232,14 +221,7 @@ export const postgresAdapter: PostgresDatabase = {
         return { data: null, error };
       }
     },
-    delete: async () => {
-      try {
-        const result = await prisma.column.deleteMany();
-        return { data: result, error: null };
-      } catch (error) {
-        return { data: null, error };
-      }
-    },
+    delete: async () => ({ data: null, error: new Error('Unscoped deletion is disabled. Use an authorized operation with an explicit row ID.') }),
   },
   tasks: {
     select: (columns?: string) => new PostgresQueryBuilderWithInclude<Database['public']['Tables']['tasks']['Row']>('tasks'),
@@ -263,14 +245,7 @@ export const postgresAdapter: PostgresDatabase = {
         return { data: null, error };
       }
     },
-    delete: async () => {
-      try {
-        const result = await prisma.task.deleteMany();
-        return { data: result, error: null };
-      } catch (error) {
-        return { data: null, error };
-      }
-    },
+    delete: async () => ({ data: null, error: new Error('Unscoped deletion is disabled. Use an authorized operation with an explicit row ID.') }),
   },
 };
 
