@@ -1,0 +1,74 @@
+name: Ship to staging
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: staging
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  staging:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      TASKS_PROJECT_REF: ${{ vars.TASKS_PROJECT_REF }}
+      AUDIT_EMAIL: ${{ secrets.AUDIT_EMAIL }}
+      AUDIT_PASSWORD: ${{ secrets.AUDIT_PASSWORD }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Require exact passing main CI and staging credentials
+        run: |
+          python3 .github/scripts/release-gate.py candidate --sha "$SOURCE_SHA"
+          for key in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID TASKS_PROJECT_REF AUDIT_EMAIL AUDIT_PASSWORD; do
+            [ -n "${!key}" ] || { echo "Missing staging $key" >&2; exit 1; }
+          done
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install pinned deployment CLI
+        run: npm install --global vercel@59.19.1
+      - name: Pull and validate isolated preview settings
+        run: |
+          vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          python3 .github/scripts/check-preview-env.py .vercel/.env.preview.local
+      - run: vercel build --token="$VERCEL_TOKEN"
+      - name: Deploy preview
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" --meta releaseSha="$SOURCE_SHA")
+          [[ "$url" =~ ^https://[a-zA-Z0-9.-]+\.vercel\.app$ ]] || { echo 'Unexpected deployment URL' >&2; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Verify deployed login and authenticated staging API
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.deploy.outputs.url }}
+        run: python3 .github/scripts/staging-smoke.py
+      - name: Record tested staging provenance
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+        run: python3 .github/scripts/release-gate.py record --sha "$SOURCE_SHA"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: staging-provenance
+          path: staging-provenance.json
+          if-no-files-found: error
+          retention-days: 90

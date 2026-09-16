@@ -1,0 +1,54 @@
+name: Promote to production
+on:
+  workflow_dispatch:
+    inputs:
+      staging_run_id:
+        description: Successful Ship to staging run ID for current main
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: production
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      TASKS_PROJECT_REF: ${{ vars.TASKS_PROJECT_REF }}
+      STAGING_RUN_ID: ${{ inputs.staging_run_id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Resolve successful staged SHA
+        id: candidate
+        run: |
+          [ -n "$VERCEL_TOKEN" ] || { echo 'Missing production VERCEL_TOKEN' >&2; exit 1; }
+          python3 .github/scripts/release-gate.py promote --run-id "$STAGING_RUN_ID"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.candidate.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm install --global vercel@59.19.1
+      # NEXT_PUBLIC values are compiled into the browser bundle. Rebuild exactly
+      # the tested source with production settings; never alias a staging bundle.
+      - run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - run: python3 .github/scripts/check-preview-env.py .vercel/.env.production.local --production
+      - run: vercel build --prod --token="$VERCEL_TOKEN"
+      - run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" --meta releaseSha="${{ steps.candidate.outputs.sha }}"
